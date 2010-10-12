@@ -1,0 +1,8 @@
+//
+// Prefix header for all source files of the 'Server' target in the 'Server' project
+//
+
+#ifdef __OBJC__
+	#import <Cocoa/Cocoa.h>
+	#import <NXTKit/NXTKit.h>
+#endif
