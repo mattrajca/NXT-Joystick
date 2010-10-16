@@ -25,6 +25,9 @@
 
 // BK: http://www.flickr.com/photos/torley/2587091353/
 
+#define TURN_INTERVAL 5
+#define MAX_TURN 50
+
 - (id)initWithCoder:(NSCoder *)aDecoder {
 	self = [super init];
 	if (self) {
@@ -131,7 +134,15 @@
 	
 	[[motion attitude] multiplyByInverseOfAttitude:_refAttitude];
 	
-	int8_t attitude = ((int8_t) floor(motion.attitude.pitch * 50 / 5)) * 5;
+	double inside = motion.attitude.pitch * MAX_TURN / TURN_INTERVAL;
+	int8_t attitude = 0;
+	
+	if (inside > 0) {
+		attitude = ((int8_t) floor(inside)) * TURN_INTERVAL;
+	}
+	else if (inside < 0) {
+		attitude = ((int8_t) ceil(inside)) * TURN_INTERVAL;
+	}
 	
 	Packet *packet = [[Packet alloc] init];
 	packet.turnRatio = attitude;
