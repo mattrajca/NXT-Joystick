@@ -11,7 +11,8 @@
 
 @interface JoystickViewController ()
 
-- (void)showBrowser;
+- (void)showBrowser:(NSNumber *)animated; /* BOOL */
+- (void)enteredBackground:(NSNotification *)not;
 - (void)stopClient;
 - (void)processMotion:(CMDeviceMotion *)motion;
 
@@ -40,12 +41,19 @@
 	[super viewDidAppear:animated];
 	
 	if (!_displayedOnce) {
-		[self performSelector:@selector(showBrowser) withObject:nil afterDelay:0.25f];
+		[self performSelector:@selector(showBrowser:)
+				   withObject:[NSNumber numberWithBool:YES]
+				   afterDelay:0.25f];
+		
 		_displayedOnce = YES;
 	}
 }
 
-- (void)showBrowser {
+- (void)showBrowser:(NSNumber *)animated {
+	[[NSNotificationCenter defaultCenter] removeObserver:self
+													name:UIApplicationWillResignActiveNotification
+												  object:[UIApplication sharedApplication]];
+	
 	BrowserViewController *vc = [[BrowserViewController alloc] init];
 	vc.delegate = self;
 	vc.serviceType = @"_nxtjoystick._tcp.";
@@ -54,7 +62,7 @@
 	UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
 	[vc release];
 	
-	[self presentModalViewController:nav animated:YES];
+	[self presentModalViewController:nav animated:[animated boolValue]];
 	[nav release];
 }
 
@@ -62,8 +70,20 @@
     return interfaceOrientation == UIInterfaceOrientationLandscapeRight;
 }
 
+- (void)enteredBackground:(NSNotification *)not {
+	if (_outputStream) {
+		[self stopClient];
+		[self showBrowser:nil];
+	}
+}
+
 - (void)browserViewController:(BrowserViewController *)bvc
 			didResolveService:(NSNetService *)service {
+	
+	[[NSNotificationCenter defaultCenter] addObserver:self
+											 selector:@selector(enteredBackground:)
+												 name:UIApplicationWillResignActiveNotification
+											   object:[UIApplication sharedApplication]];
 	
 	[service getInputStream:NULL outputStream:&_outputStream];
 	
@@ -82,8 +102,6 @@
 	
 	[_refAttitude release];
 	_refAttitude = nil;
-	
-	[self showBrowser];
 }
 
 - (void)stream:(NSStream *)aStream handleEvent:(NSStreamEvent)eventCode {
@@ -99,6 +117,10 @@
 			 eventCode == NSStreamEventErrorOccurred) {
 		
 		[self performSelectorOnMainThread:@selector(stopClient) withObject:nil waitUntilDone:NO];
+		
+		[self performSelectorOnMainThread:@selector(showBrowser:)
+							   withObject:[NSNumber numberWithBool:YES]
+							waitUntilDone:NO];
 	}
 }
 
@@ -139,6 +161,7 @@
 
 - (IBAction)stop:(id)sender {
 	[self stopClient];
+	[self showBrowser:[NSNumber numberWithBool:YES]];
 }
 
 - (void)dealloc {
