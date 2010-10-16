@@ -104,7 +104,7 @@
 }
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation {
-    return UIInterfaceOrientationIsLandscape(interfaceOrientation);
+    return interfaceOrientation == UIInterfaceOrientationLandscapeRight;
 }
 
 - (void)sortAndUpdateUI {
@@ -136,7 +136,8 @@
 	[self dismissModalViewControllerAnimated:YES];
 	
 	if ([self.delegate respondsToSelector:@selector(browserViewController:didResolveService:)]) {
-		[self.delegate browserViewController:self didResolveService:[[service retain] autorelease]];
+		[self.delegate browserViewController:self
+						   didResolveService:[[service retain] autorelease]];
 	}
 }
 

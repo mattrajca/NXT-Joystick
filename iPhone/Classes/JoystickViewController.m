@@ -23,8 +23,6 @@
 
 // BGD http://www.flickr.com/photos/torley/2587091353/
 
-#define FILTER 0.2f
-
 - (id)initWithCoder:(NSCoder *)aDecoder {
 	self = [super init];
 	if (self) {
@@ -61,16 +59,25 @@
 }
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation {
-    return UIInterfaceOrientationIsLandscape(interfaceOrientation);
+    return interfaceOrientation == UIInterfaceOrientationLandscapeRight;
 }
 
-- (void)browserViewController:(BrowserViewController *)bvc didResolveService:(NSNetService *)service {
+- (void)browserViewController:(BrowserViewController *)bvc
+			didResolveService:(NSNetService *)service {
+	
 	[service getInputStream:NULL outputStream:&_outputStream];
 	
 	[_outputStream retain];
 	[_outputStream setDelegate:self];
 	[_outputStream scheduleInRunLoop:[NSRunLoop currentRunLoop] forMode:NSRunLoopCommonModes];
 	[_outputStream open];
+}
+
+- (void)cleanupStream {
+	[_outputStream release];
+	_outputStream = nil;
+	
+	[self showBrowser];	
 }
 
 - (void)stream:(NSStream *)aStream handleEvent:(NSStreamEvent)eventCode {
@@ -81,6 +88,13 @@
 									 [self processMotion:motion];
 									 
 								 }];
+	}
+	else if (eventCode == NSStreamEventEndEncountered ||
+			 eventCode == NSStreamEventErrorOccurred) {
+		
+		[_motionManager stopDeviceMotionUpdates];
+		
+		[self performSelectorOnMainThread:@selector(cleanupStream) withObject:nil waitUntilDone:NO];
 	}
 }
 

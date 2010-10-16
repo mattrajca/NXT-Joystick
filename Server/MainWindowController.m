@@ -42,16 +42,29 @@
 	[self windowDidAppear];
 }
 
+- (void)close {
+	if (![NSThread isMainThread]) {
+		[self performSelectorOnMainThread:@selector(close)
+							   withObject:nil
+							waitUntilDone:NO];
+		
+		return;
+	}
+	
+	[super close];
+}
+
 - (void)windowWillClose:(NSNotification *)notification {
 	[_device close];
 	
 	if (_server) {
 		[_server stop];
+		_server = nil;
 	}
 	
 	if (_inputStream) {
 		[_inputStream close];
-		[_inputStream removeFromRunLoop:[NSRunLoop currentRunLoop] forMode:NSRunLoopCommonModes];
+		_inputStream = nil;
 	}
 }
 
@@ -132,12 +145,21 @@
 		uint8_t buff[BUFF_SIZE];
 		size_t read = [_inputStream read:buff maxLength:BUFF_SIZE];
 		
+		if (read <= 0) {
+			[self close];
+			return;
+		}
+		
 		NSData *data = [NSData dataWithBytes:buff length:read];
 		Packet *packet = [NSKeyedUnarchiver unarchiveObjectWithData:data];
 		
-		[self performSelector:@selector(forwardPacket:) withObject:packet afterDelay:0.0f];
+		[self performSelectorOnMainThread:@selector(forwardPacket:)
+							   withObject:packet
+							waitUntilDone:NO];
 	}
-	else if (eventCode == NSStreamEventErrorOccurred || eventCode == NSStreamEventEndEncountered) {
+	else if (eventCode == NSStreamEventErrorOccurred ||
+			 eventCode == NSStreamEventEndEncountered) {
+		
 		[self close];
 	}
 }
