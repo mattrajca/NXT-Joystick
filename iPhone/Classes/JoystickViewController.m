@@ -97,6 +97,7 @@
 }
 
 - (void)stopClient {
+	[_writeQueue cancelAllOperations];
 	[_motionManager stopDeviceMotionUpdates];
 	
 	[_outputStream close];
@@ -105,6 +106,9 @@
 	
 	[_refAttitude release];
 	_refAttitude = nil;
+	
+	[_prevPacket release];
+	_prevPacket = nil;
 }
 
 - (void)stream:(NSStream *)aStream handleEvent:(NSStreamEvent)eventCode {
