@@ -11,10 +11,14 @@
 
 @interface MainWindowController ()
 
+- (void)closeDevice;
+- (void)closeRest;
+
 - (void)setupDevice:(IOBluetoothDevice *)device;
 - (void)startServer;
 - (void)cleanupServer;
 
+- (void)stopMotors;
 - (void)resetMotor:(NXTOutputPort)port;
 - (void)driveMotor:(NXTOutputPort)port power:(int8_t)power turnRatio:(int8_t)turnRatio;
 - (void)forwardPacket:(Packet *)packet;
@@ -58,9 +62,15 @@
 	[super close];
 }
 
-- (void)windowWillClose:(NSNotification *)notification {
-	[_device close];
+- (void)closeDevice {
+	[self stopMotors];
+	[NSThread sleepForTimeInterval:0.1f]; // give time to finish
 	
+	[_device close];
+	_device = nil;
+}
+
+- (void)closeRest {
 	if (_server) {
 		[_server stop];
 		_server = nil;
@@ -69,6 +79,14 @@
 	if (_inputStream) {
 		[_inputStream close];
 		_inputStream = nil;
+	}
+}
+
+- (void)windowWillClose:(NSNotification *)notification {
+	[self closeRest];
+	
+	if (_device) {
+		[self closeDevice];
 	}
 }
 
@@ -87,6 +105,7 @@
 }
 
 - (void)deviceDidClose:(MRDevice *)aDevice {
+	_device = nil;
 	[self close];
 }
 
@@ -96,6 +115,7 @@
 }
 
 - (void)device:(MRDevice *)aDevice didFailToOpen:(NSError *)error {
+	_device = nil;
 	[self close];
 	[NSApp presentError:error];
 }
@@ -165,6 +185,19 @@
 		
 		[self close];
 	}
+}
+
+- (void)stopMotors {
+	MRNXTSetOutputStateCommand *cmd = [[MRNXTSetOutputStateCommand alloc] init];
+	cmd.outputMode = NXTOutputModeBrake;
+	cmd.port = NXTOutputPortAll;
+	cmd.power = 0;
+	cmd.regulationMode = NXTRegulationModeIdle;
+	cmd.runState = NXTRunStateIdle;
+	cmd.tachoLimit = 0;
+	cmd.turnRatio = 0;
+	
+	[_device enqueueCommand:cmd responseBlock:NULL];
 }
 
 - (void)resetMotor:(NXTOutputPort)port {

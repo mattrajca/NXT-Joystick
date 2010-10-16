@@ -144,6 +144,8 @@
 		attitude = ((int8_t) ceil(inside)) * TURN_INTERVAL;
 	}
 	
+	printf("%f\n", motion.attitude.roll);
+	
 	Packet *packet = [[Packet alloc] init];
 	packet.turnRatio = attitude;
 	packet.power = 75;
