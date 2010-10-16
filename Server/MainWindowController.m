@@ -139,17 +139,22 @@
 	}
 }
 
-- (void)forwardPacket:(Packet *)packet {
+- (void)driveMotor:(NXTOutputPort)port power:(int8_t)power turnRatio:(int8_t)turnRatio {
 	MRNXTSetOutputStateCommand *cmd = [[MRNXTSetOutputStateCommand alloc] init];
-	cmd.outputMode = NXTOutputModeBrake | NXTOutputModeMotorOn | NXTOutputModeRegulated;
-	cmd.port = NXTOutputPortAll;
-	cmd.power = packet.power;
+	cmd.outputMode = NXTOutputModeMotorOn | NXTOutputModeRegulated;
+	cmd.port = port;
+	cmd.power = power;
 	cmd.regulationMode = NXTRegulationModeMotorSync;
 	cmd.runState = NXTRunStateRunning;
 	cmd.tachoLimit = 0;
-	cmd.turnRatio = packet.turnRatio;
+	cmd.turnRatio = turnRatio;
 	
 	[_device enqueueCommand:cmd responseBlock:NULL];
+}
+
+- (void)forwardPacket:(Packet *)packet {
+	[self driveMotor:NXTOutputPortB power:packet.power turnRatio:packet.turnRatio];
+	[self driveMotor:NXTOutputPortC power:packet.power turnRatio:packet.turnRatio];
 }
 
 @end

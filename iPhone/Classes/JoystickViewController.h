@@ -7,12 +7,15 @@
 
 #import "BrowserViewController.h"
 
+@class Packet;
+
 @interface JoystickViewController : UIViewController < BrowserViewControllerDelegate, NSStreamDelegate > {
   @private
 	CMMotionManager *_motionManager;
 	NSOperationQueue *_writeQueue;
 	NSOutputStream *_outputStream;
 	CMAttitude *_refAttitude;
+	Packet *_prevPacket;
 	BOOL _displayedOnce;
 }
 

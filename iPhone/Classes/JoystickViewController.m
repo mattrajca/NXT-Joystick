@@ -23,6 +23,8 @@
 
 // BGD http://www.flickr.com/photos/torley/2587091353/
 
+#define FILTER 0.2f
+
 - (id)initWithCoder:(NSCoder *)aDecoder {
 	self = [super init];
 	if (self) {
@@ -88,20 +90,25 @@
 	
 	[[motion attitude] multiplyByInverseOfAttitude:_refAttitude];
 	
-	int lr = (int) (-motion.attitude.pitch * 100);
-	// int pwr = 100 - (int) (motion.attitude.roll * 100);
+	int8_t attitude = ((int8_t) floor(-motion.attitude.pitch * 50 / 5)) * 5;
 	
-	// kFilter = 0.1
-	// val = new * kFilter + old * (1.0 - kFilter)
+	Packet *packet = [[Packet alloc] init];
+	packet.turnRatio = attitude;
+	packet.power = 75;
+	
+	if (_prevPacket) {
+		if (packet.turnRatio == _prevPacket.turnRatio && packet.power == _prevPacket.power) {
+			[packet release];
+			return;
+		}
+	}
+	
+	_prevPacket = [packet retain];
+	[packet release];
+	
+	NSData *data = [NSKeyedArchiver archivedDataWithRootObject:packet];
 	
 	[_writeQueue addOperationWithBlock:^{
-		
-		Packet *packet = [[Packet alloc] init];
-		packet.turnRatio = lr;
-		packet.power = 75;
-		
-		NSData *data = [NSKeyedArchiver archivedDataWithRootObject:packet];
-		[packet release];
 		
 		[_outputStream write:[data bytes] maxLength:[data length]];
 		

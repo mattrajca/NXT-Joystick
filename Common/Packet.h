@@ -9,7 +9,7 @@
 
 }
 
-@property (assign) int8_t power;
-@property (assign) int8_t turnRatio;
+@property (nonatomic, assign) int8_t power;
+@property (nonatomic, assign) int8_t turnRatio;
 
 @end
