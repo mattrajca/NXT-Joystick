@@ -21,6 +21,16 @@
 
 @end
 
+@interface BrowserViewController ()
+
+- (void)stopBrowser;
+- (void)startBrowser;
+
+- (void)enteredBackground:(NSNotification *)not;
+- (void)leftBackground:(NSNotification *)not;
+
+@end
+
 
 @implementation BrowserViewController
 
@@ -73,7 +83,6 @@
 
 - (void)viewDidAppear:(BOOL)animated {
 	[super viewDidAppear:animated];
-	
 	[self startBrowser];
 }
 

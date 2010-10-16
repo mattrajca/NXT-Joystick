@@ -12,6 +12,7 @@
 @interface JoystickViewController ()
 
 - (void)showBrowser;
+- (void)stopClient;
 - (void)processMotion:(CMDeviceMotion *)motion;
 
 @end
@@ -21,7 +22,7 @@
 
 @synthesize statusLabel;
 
-// BGD http://www.flickr.com/photos/torley/2587091353/
+// BK: http://www.flickr.com/photos/torley/2587091353/
 
 - (id)initWithCoder:(NSCoder *)aDecoder {
 	self = [super init];
@@ -47,15 +48,14 @@
 - (void)showBrowser {
 	BrowserViewController *vc = [[BrowserViewController alloc] init];
 	vc.delegate = self;
+	vc.serviceType = @"_nxtjoystick._tcp.";
+	vc.domain = @"";
 	
 	UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
 	[vc release];
 	
-	vc.serviceType = @"_nxtjoystick._tcp.";
-	vc.domain = @"";
-	
 	[self presentModalViewController:nav animated:YES];
-	[nav release];	
+	[nav release];
 }
 
 - (BOOL)shouldAutorotateToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation {
@@ -73,11 +73,17 @@
 	[_outputStream open];
 }
 
-- (void)cleanupStream {
+- (void)stopClient {
+	[_motionManager stopDeviceMotionUpdates];
+	
+	[_outputStream close];
 	[_outputStream release];
 	_outputStream = nil;
 	
-	[self showBrowser];	
+	[_refAttitude release];
+	_refAttitude = nil;
+	
+	[self showBrowser];
 }
 
 - (void)stream:(NSStream *)aStream handleEvent:(NSStreamEvent)eventCode {
@@ -92,9 +98,7 @@
 	else if (eventCode == NSStreamEventEndEncountered ||
 			 eventCode == NSStreamEventErrorOccurred) {
 		
-		[_motionManager stopDeviceMotionUpdates];
-		
-		[self performSelectorOnMainThread:@selector(cleanupStream) withObject:nil waitUntilDone:NO];
+		[self performSelectorOnMainThread:@selector(stopClient) withObject:nil waitUntilDone:NO];
 	}
 }
 
@@ -124,6 +128,9 @@
 	NSData *data = [NSKeyedArchiver archivedDataWithRootObject:packet];
 	
 	[_writeQueue addOperationWithBlock:^{
+		
+		if (!_outputStream)
+			return;
 		
 		[_outputStream write:[data bytes] maxLength:[data length]];
 		
