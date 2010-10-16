@@ -137,6 +137,10 @@
 	}];	
 }
 
+- (IBAction)stop:(id)sender {
+	[self stopClient];
+}
+
 - (void)dealloc {
 	[_motionManager release];
 	[_writeQueue release];

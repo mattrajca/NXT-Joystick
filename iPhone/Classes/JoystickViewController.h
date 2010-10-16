@@ -21,5 +21,7 @@
 
 @property (nonatomic, retain) IBOutlet UILabel *statusLabel;
 
+- (IBAction)stop:(id)sender;
+
 @end
 
