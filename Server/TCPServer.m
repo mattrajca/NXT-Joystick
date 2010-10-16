@@ -67,9 +67,10 @@ NSString *const TCPServerErrorDomain = @"TCPServerErrorDomain";
 }
 
 - (void)handleNewConnectionFromAddress:(NSData *)addr
-						   inputStream:(NSInputStream *)is outputStream:(NSOutputStream *)os { 
+						   inputStream:(NSInputStream *)is
+						  outputStream:(NSOutputStream *)os { 
 	
-	if ([self.delegate respondsToSelector:@selector(server:didAcceptConnectionWithInputStream:outputStream:)]) { 
+	if ([self.delegate respondsToSelector:@selector(server:didAcceptConnectionWithInputStream:outputStream:)]) {
 		[self.delegate server:self didAcceptConnectionWithInputStream:is outputStream:os];
 	}
 }
@@ -122,12 +123,8 @@ static void TCPServerAcceptCallBack (CFSocketRef socket, CFSocketCallBackType ty
 	if (!_socket) {
 		if (error)
 			*error = [[NSError alloc] initWithDomain:TCPServerErrorDomain
-												code:kTCPServerNoSocketsAvailable userInfo:nil];
-		
-		if (_socket) {
-			CFRelease(_socket);
-			_socket = NULL;
-		}
+												code:kTCPServerNoSocketsAvailable
+											userInfo:nil];
 		
 		return NO;
 	}
@@ -148,7 +145,8 @@ static void TCPServerAcceptCallBack (CFSocketRef socket, CFSocketCallBackType ty
 	if (CFSocketSetAddress(_socket, (CFDataRef) address4) != kCFSocketSuccess) {
 		if (error)
 			*error = [[NSError alloc] initWithDomain:TCPServerErrorDomain
-												code:kTCPServerCouldNotBindToIPv4Address userInfo:nil];
+												code:kTCPServerCouldNotBindToIPv4Address
+											userInfo:nil];
 		
 		if (_socket) {
 			CFRelease(_socket);
@@ -184,7 +182,10 @@ static void TCPServerAcceptCallBack (CFSocketRef socket, CFSocketCallBackType ty
 	return YES;
 }
 
-- (BOOL)enableBonjourWithDomain:(NSString *)domain applicationProtocol:(NSString *)protocol name:(NSString *)name {
+- (BOOL)enableBonjourWithDomain:(NSString *)domain
+			applicationProtocol:(NSString *)protocol
+						   name:(NSString *)name {
+	
 	if (![domain length])
 		domain = @"";
 	
@@ -227,7 +228,8 @@ static void TCPServerAcceptCallBack (CFSocketRef socket, CFSocketCallBackType ty
 }
 
 - (NSString *)description {
-	return [NSString stringWithFormat:@"<%@ = 0x%08X | port %d | netService = %@>", [self class], (long) self, _port, _netService];
+	return [NSString stringWithFormat:@"<%@ = 0x%08X | port %d | netService = %@>",
+			[self class], (long) self, _port, _netService];
 }
 
 - (void)dealloc {

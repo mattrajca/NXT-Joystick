@@ -13,6 +13,10 @@
 
 - (void)setupDevice:(IOBluetoothDevice *)device;
 - (void)startServer;
+- (void)cleanupServer;
+
+- (void)resetMotor:(NXTOutputPort)port;
+- (void)driveMotor:(NXTOutputPort)port power:(int8_t)power turnRatio:(int8_t)turnRatio;
 - (void)forwardPacket:(Packet *)packet;
 
 @end
@@ -88,7 +92,6 @@
 
 - (void)deviceDidOpen:(MRDevice *)aDevice {
 	[self.statusLabel setStringValue:@"Starting server..."];
-	
 	[self startServer];
 }
 
@@ -117,7 +120,7 @@
 	[self.statusLabel setStringValue:@"Waiting for iOS devices..."];
 }
 
-- (void)stopServer {
+- (void)cleanupServer {
 	_server = nil;
 }
 
@@ -134,7 +137,7 @@
 	[_inputStream scheduleInRunLoop:[NSRunLoop currentRunLoop] forMode:NSRunLoopCommonModes];
 	[_inputStream open];
 	
-	[self performSelector:@selector(stopServer) withObject:nil afterDelay:0.0f];
+	[self performSelector:@selector(cleanupServer) withObject:nil afterDelay:0.0f];
 }
 
 - (void)stream:(NSStream *)aStream handleEvent:(NSStreamEvent)eventCode {

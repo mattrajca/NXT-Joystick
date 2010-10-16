@@ -57,7 +57,9 @@
 }
 
 - (void)closedMainWindow:(id)sender {
-	[self performSelector:@selector(cleanupMainWindow) withObject:nil afterDelay:0.0f];
+	[self performSelector:@selector(cleanupMainWindow)
+			   withObject:nil
+			   afterDelay:0.0f];
 }
 
 - (void)cleanupMainWindow {
