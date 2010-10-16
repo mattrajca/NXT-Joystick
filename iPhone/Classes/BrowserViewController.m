@@ -24,27 +24,57 @@
 
 @implementation BrowserViewController
 
-@synthesize delegate;
+@synthesize delegate, serviceType, domain;
 
 - (id)init {
 	self = [super initWithStyle:UITableViewStylePlain];
 	if (self) {
 		self.title = NSLocalizedString(@"Computers", nil);
 		_services = [[NSMutableArray alloc] init];
+		
+		[[NSNotificationCenter defaultCenter] addObserver:self
+												 selector:@selector(enteredBackground:)
+													 name:UIApplicationWillResignActiveNotification
+												   object:[UIApplication sharedApplication]];
+		
+		[[NSNotificationCenter defaultCenter] addObserver:self
+												 selector:@selector(leftBackground:)
+													 name:UIApplicationWillEnterForegroundNotification
+												   object:[UIApplication sharedApplication]];
 	}
 	return self;
 }
 
-- (BOOL)searchForServicesOfType:(NSString *)type inDomain:(NSString *)domain {
+- (void)stopBrowser {
 	[_browser stop];
 	[_services removeAllObjects];
 	
-	_browser = [[NSNetServiceBrowser alloc] init];
-	_browser.delegate = self;
+	[self.tableView reloadData];
+}
+
+- (void)startBrowser {
+	[self stopBrowser];
 	
-	[_browser searchForServicesOfType:type inDomain:domain];
+	if (!_browser) {
+		_browser = [[NSNetServiceBrowser alloc] init];
+		_browser.delegate = self;
+	}
 	
-	return YES;
+	[_browser searchForServicesOfType:self.serviceType inDomain:self.domain];
+}
+
+- (void)enteredBackground:(NSNotification *)not {
+	[self stopBrowser];
+}
+
+- (void)leftBackground:(NSNotification *)not {
+	[self startBrowser];
+}
+
+- (void)viewDidAppear:(BOOL)animated {
+	[super viewDidAppear:animated];
+	
+	[self startBrowser];
 }
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {

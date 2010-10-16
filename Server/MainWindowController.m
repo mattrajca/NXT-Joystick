@@ -137,6 +137,17 @@
 		
 		[self performSelector:@selector(forwardPacket:) withObject:packet afterDelay:0.0f];
 	}
+	else if (eventCode == NSStreamEventErrorOccurred || eventCode == NSStreamEventEndEncountered) {
+		[self close];
+	}
+}
+
+- (void)resetMotor:(NXTOutputPort)port {
+	MRNXTResetMotorPositionCommand *cmd = [[MRNXTResetMotorPositionCommand alloc] init];
+	cmd.port = port;
+	cmd.relative = YES;
+	
+	[_device enqueueCommand:cmd responseBlock:NULL];
 }
 
 - (void)driveMotor:(NXTOutputPort)port power:(int8_t)power turnRatio:(int8_t)turnRatio {
@@ -153,6 +164,9 @@
 }
 
 - (void)forwardPacket:(Packet *)packet {
+	[self resetMotor:NXTOutputPortB];
+	[self resetMotor:NXTOutputPortC];
+	
 	[self driveMotor:NXTOutputPortB power:packet.power turnRatio:packet.turnRatio];
 	[self driveMotor:NXTOutputPortC power:packet.power turnRatio:packet.turnRatio];
 }

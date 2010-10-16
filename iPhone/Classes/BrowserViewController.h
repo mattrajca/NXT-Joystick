@@ -22,6 +22,7 @@
 
 @property (nonatomic, assign) id < BrowserViewControllerDelegate > delegate;
 
-- (BOOL)searchForServicesOfType:(NSString *)type inDomain:(NSString *)domain;
+@property (nonatomic, copy) NSString *serviceType;
+@property (nonatomic, copy) NSString *domain;
 
 @end

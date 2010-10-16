@@ -53,7 +53,8 @@
 	UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
 	[vc release];
 	
-	[vc searchForServicesOfType:@"_nxtjoystick._tcp." inDomain:@""];
+	vc.serviceType = @"_nxtjoystick._tcp.";
+	vc.domain = @"";
 	
 	[self presentModalViewController:nav animated:YES];
 	[nav release];	
@@ -90,7 +91,7 @@
 	
 	[[motion attitude] multiplyByInverseOfAttitude:_refAttitude];
 	
-	int8_t attitude = ((int8_t) floor(-motion.attitude.pitch * 50 / 5)) * 5;
+	int8_t attitude = ((int8_t) floor(motion.attitude.pitch * 50 / 5)) * 5;
 	
 	Packet *packet = [[Packet alloc] init];
 	packet.turnRatio = attitude;
