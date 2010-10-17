@@ -14,6 +14,7 @@
 - (void)showBrowser:(NSNumber *)animated; /* BOOL */
 - (void)enteredBackground:(NSNotification *)not;
 - (void)stopClient;
+- (void)handleNetworkFail;
 - (void)processMotion:(CMDeviceMotion *)motion;
 
 @end
@@ -26,7 +27,10 @@
 // BK: http://www.flickr.com/photos/torley/2587091353/
 
 #define TURN_INTERVAL 5
+#define POWER_INTERVAL 10
 #define MAX_TURN 50
+#define MAX_POWER_OFFSET 120
+#define MAX_POWER 100
 
 - (id)initWithCoder:(NSCoder *)aDecoder {
 	self = [super init];
@@ -111,6 +115,11 @@
 	_prevPacket = nil;
 }
 
+- (void)handleNetworkFail {
+	[self stopClient];
+	[self showBrowser:[NSNumber numberWithBool:YES]];
+}
+
 - (void)stream:(NSStream *)aStream handleEvent:(NSStreamEvent)eventCode {
 	if (eventCode == NSStreamEventOpenCompleted) {
 		[_motionManager startDeviceMotionUpdatesToQueue:[NSOperationQueue mainQueue]
@@ -123,12 +132,19 @@
 	else if (eventCode == NSStreamEventEndEncountered ||
 			 eventCode == NSStreamEventErrorOccurred) {
 		
-		[self performSelectorOnMainThread:@selector(stopClient) withObject:nil waitUntilDone:NO];
-		
-		[self performSelectorOnMainThread:@selector(showBrowser:)
-							   withObject:[NSNumber numberWithBool:YES]
+		[self performSelectorOnMainThread:@selector(handleNetworkFail)
+							   withObject:nil
 							waitUntilDone:NO];
 	}
+}
+
+static int mr_int_clamp (int v, int min, int max) {
+	if (v < min)
+		return min;
+	else if (v > max)
+		return max;
+	
+	return v;
 }
 
 - (void)processMotion:(CMDeviceMotion *)motion {
@@ -138,21 +154,19 @@
 	
 	[[motion attitude] multiplyByInverseOfAttitude:_refAttitude];
 	
+	Packet *packet = [[Packet alloc] init];
+	
 	double inside = motion.attitude.pitch * MAX_TURN / TURN_INTERVAL;
-	int8_t attitude = 0;
 	
 	if (inside > 0) {
-		attitude = ((int8_t) floor(inside)) * TURN_INTERVAL;
+		packet.turnRatio = mr_int_clamp(((int8_t) floor(inside)) * TURN_INTERVAL, -20, 20);
 	}
 	else if (inside < 0) {
-		attitude = ((int8_t) ceil(inside)) * TURN_INTERVAL;
+		packet.turnRatio =  mr_int_clamp(((int8_t) ceil(inside)) * TURN_INTERVAL, -20, 20);
 	}
 	
-	printf("%f\n", motion.attitude.roll);
-	
-	Packet *packet = [[Packet alloc] init];
-	packet.turnRatio = attitude;
-	packet.power = 75;
+	inside = (MAX_POWER_OFFSET - (-motion.attitude.roll) * MAX_POWER) / POWER_INTERVAL;
+	packet.power =  mr_int_clamp(((int8_t) floor(inside)) * POWER_INTERVAL, 0, 100);
 	
 	if (_prevPacket) {
 		if (packet.turnRatio == _prevPacket.turnRatio && packet.power == _prevPacket.power) {
@@ -171,9 +185,13 @@
 		if (!_outputStream)
 			return;
 		
-		[_outputStream write:[data bytes] maxLength:[data length]];
+		if ([_outputStream write:[data bytes] maxLength:[data length]] < 0) {
+			[self performSelectorOnMainThread:@selector(handleNetworkFail)
+								   withObject:nil
+								waitUntilDone:NO];
+		}
 		
-	}];	
+	}];
 }
 
 - (IBAction)stop:(id)sender {
