@@ -1,7 +1,7 @@
-NXT-Joystick
+NXT Joystick
 ============
 
-Drive a NXT bot with iPhone. Since Bluetooth connections cannot be made directly to the NXT brick from iPhone, a 'Server' component is required (included). iPhone 4 is also required to run the client program, as the gyroscope is used to track the device attitude.
+NXT Joystick allows you to drive a NXT bot with iPhone. Since direct Bluetooth connections cannot be made from iPhone to the NXT brick, a 'Server' component is required. iPhone 4 or better is also required to run the client program as the gyroscope is used to track device attitude.
 
 Usage
 -----
