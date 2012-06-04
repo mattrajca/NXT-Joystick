@@ -48,8 +48,8 @@
 												   object:[UIApplication sharedApplication]];
 		
 		[[NSNotificationCenter defaultCenter] addObserver:self
-												 selector:@selector(leftBackground:)
-													 name:UIApplicationWillEnterForegroundNotification
+												 selector:@selector(becameActive:)
+													 name:UIApplicationDidBecomeActiveNotification
 												   object:[UIApplication sharedApplication]];
 	}
 	return self;
@@ -77,7 +77,7 @@
 	[self stopBrowser];
 }
 
-- (void)leftBackground:(NSNotification *)not {
+- (void)becameActive:(NSNotification *)not {
 	[self startBrowser];
 }
 
